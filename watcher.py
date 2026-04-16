@@ -20,6 +20,11 @@ from bs4 import BeautifulSoup
 
 from scraper import parser_article, get_soup
 from notion_sync import sync_levees
+try:
+    from enrich import enrich_levee
+    ENRICH_ENABLED = True
+except ImportError:
+    ENRICH_ENABLED = False
 
 BASE_URL = "https://lespepitestech.com"
 STATE_FILE = "last_seen.json"
@@ -101,6 +106,10 @@ def run():
         print(f"   {len(levees)} levée(s) >= 3M€ trouvée(s)")
 
         if levees:
+            # Enrichissement automatique des données manquantes
+            if ENRICH_ENABLED:
+                for l in levees:
+                    enrich_levee(l)
             print(f"   Sync vers Notion...")
             aj, ig, err = sync_levees(levees)
             total_ajoutees += aj
